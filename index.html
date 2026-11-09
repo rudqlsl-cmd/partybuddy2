@@ -1,134 +1,85 @@
-<!doctype html>
-<html lang="ko">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>어린이 생일파티 경험 및 신규 서비스 수요 조사</title>
-<style>
-:root{--bg:#f4f2ee;--card:#fff;--ink:#1d1d1f;--sub:#6b6b70;--line:#e4e2dc;--accent:#e2231a;--soft:#fdecea}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif;line-height:1.6}
-.wrap{max-width:720px;margin:0 auto;padding:28px 16px 64px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:14px}
-.head{border-top:8px solid var(--accent)}
-h1{font-size:23px;margin:0 0 10px}
-.desc{color:var(--sub);font-size:14.5px;white-space:pre-line;margin:0}
-.sec{font-size:17px;font-weight:800;margin:26px 4px 10px;color:var(--accent)}
-.q{font-weight:700;margin:0 0 4px}
-.req{color:var(--accent)}
-.help{color:var(--sub);font-size:13.5px;white-space:pre-line;margin:0 0 10px}
-label.opt{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:7px;cursor:pointer;font-size:15px}
-label.opt:hover{background:#faf9f7}
-label.opt input{width:18px;height:18px;accent-color:var(--accent);flex:0 0 auto}
-input[type=text],textarea{width:100%;font:inherit;font-size:15px;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
-textarea{min-height:110px;resize:vertical}
-.other{margin-left:6px;flex:1;padding:6px 10px!important}
-.intro{background:var(--soft);border-radius:12px;padding:16px 18px;font-size:14.5px;white-space:pre-line}
-.err{display:none;color:var(--accent);font-size:13px;margin-top:6px}
-.card.bad{border-color:var(--accent)}
-.card.bad .err{display:block}
-button.submit{width:100%;border:0;border-radius:12px;background:var(--accent);color:#fff;font-size:17px;font-weight:800;padding:15px;cursor:pointer}
-button.submit:disabled{opacity:.6;cursor:wait}
-.done{text-align:center;padding:60px 20px;display:none}
-.done h2{font-size:22px;margin:0 0 8px}
-</style>
-</head>
-<body>
-<div class="wrap">
-<form id="f" novalidate>
-  <div class="card head">
-    <h1>어린이 생일파티 경험 및 신규 서비스 수요 조사</h1>
-    <p class="desc">안녕하세요! 저희는 이마트와 신세계푸드의 자원을 활용한 새로운 서비스 아이디어를 제안하는 프로젝트팀입니다.
-부모님들의 실제 생일파티 경험과 의견을 듣고자 합니다. 설문은 약 2분 소요되며, 응답은 아이디어 기획 및 분석 목적으로만 활용됩니다.
-본 설문은 이마트·스타필드의 공식 설문이 아니며, 실제 서비스 운영이 확정된 것은 아닙니다.</p>
-  </div>
-  <div id="qs"></div>
-  <button class="submit" type="submit" id="sb">제출하기</button>
-</form>
-<div class="card done" id="done"><h2>설문에 참여해 주셔서 감사합니다!</h2><p class="desc">응답이 저장되었습니다.</p></div>
-</div>
-
-<script>
-// ▼ 구글 Apps Script 웹앱 주소를 여기에 붙여넣기
-const SCRIPT_URL = '여기에_웹앱_URL_붙여넣기';
-
-const Q = [
-  {sec:'A. 기본 정보 및 스타필드 이용 현황'},
-  {id:'q1', type:'text', title:'1. 경품 응모 (선택)', help:'추첨을 통해 5분께 메가커피 기프티콘을 발송드립니다. 기프티콘 발송을 위한 전화번호 또는 메일을 입력해주세요.\n(ex. 010-0000-0000 / qwer123@naver.com)'},
-  {id:'agree', type:'radio', title:'[개인정보 수집·이용 동의]', help:'- 수집 항목: 전화번호 또는 이메일\n- 수집 목적: 경품 발송\n- 보유 기간: 발송 후 즉시 파기\n- 동의를 거부할 수 있으며, 거부 시 경품 응모가 제외됩니다.', opts:['동의함','동의 안 함']},
-  {id:'q2', type:'radio', req:1, title:'2. 연령대가 어떻게 되시나요?', opts:['20대','30대','40대','50대 이상']},
-  {id:'q3', type:'check', req:1, title:'3. 자녀의 연령은 어떻게 되나요? (복수 선택)', opts:['5세 이하','6~7세','8~10세','11세 이상']},
-  {id:'q4', type:'radio', req:1, title:'4. 스타필드 마켓(구 이마트)을 방문하거나 이용해보신 경험이 있으신가요?', opts:['주 1회 이상 방문한다','월 1회 이상 방문한다','3개월에 1회 이상 방문한다','방문해본 적 없다']},
-  {sec:'B. 생일파티 경험 및 불편'},
-  {id:'q5', type:'radio', req:1, other:1, title:'5. 자녀의 친구들을 초대해 생일파티를 진행한 경험이 있으신가요?', opts:['키즈카페 또는 파티룸에서 진행','집이나 기관에서 진행','경험 없음']},
-  {id:'q6', type:'radio', req:1, title:'6. 향후 1년 이내 자녀의 친구 초대 생일파티를 진행할 생각이 있으신가요?', opts:['있다','없다']},
-  {id:'q7', type:'check', req:1, max:2, title:'7. 자녀의 생일파티를 준비할 때 가장 고민되는 부분은 무엇인가요? (최대 2개)', opts:['장소 선정 및 예약','간식·케이크 준비','답례품 준비','파티 진행 및 정리','비용 부담','없음']},
-  {sec:'C. 식품 선택 기준'},
-  {id:'q8', type:'check', req:1, max:2, title:'8. 아이들의 생일파티 간식과 답례품을 선택할 때 가장 중요하게 생각하는 것은 무엇인가요? (최대 2개)', opts:['원재료·성분 및 알레르기 정보','위생 및 제조사 신뢰도','아이들의 입맛과 선호도','가격','포장 및 준비의 편리함']},
-  {sec:'D. 신규 서비스 이용 의향', intro:"[가상 서비스 아이디어 소개]\n저희 팀은 대형마트 내 공간과 기존 식품을 활용해 어린이 생일파티를 한 번에 준비할 수 있는 '파티버디(PARTY BUDDY)' 서비스를 제안하고자 합니다.\n예상 구성은 다음과 같습니다.\n- 어린이 8명 기준, 기본 가격 30만 원\n- 파티룸 2시간 이용\n- 신세계푸드의 케이크·간식·답례품 제공\n- 기본 장식·전문보육선생님·사진 촬영 및 정리\n- 챔피언 2시간 이용권 제공\n※ 실제 운영이 확정된 서비스가 아닌, 시장성 검토를 위한 가상의 기획안입니다."},
-  {id:'q9', type:'radio', req:1, title:'9. 앞서 소개한 어린이 생일파티 서비스가 이마트 또는 스타필드 내 문화센터에서 30만 원에 제공된다면, 이용할 의향이 있으신가요?', opts:['매우 있다','어느 정도 있다','보통이다','별로 없다','전혀 없다']},
-  {id:'q10', type:'check', req:1, max:2, other:1, title:'10. 해당 서비스를 이용할 때 가장 우려되는 점은 무엇인가요? (최대 2개)', opts:['가격 부담','간식·답례품의 품질','아이들의 재미','점포 위치·예약의 불편함','직접 준비하는 것이 더 좋음','서비스가 필요하지 않음']},
-  {id:'q11', type:'radio', req:1, title:'11. 자녀가 생일파티 프로그램에 참여하는 동안 부모님은 마트에서 여유롭게 쇼핑할 수 있다면 이용할 의향이 있으신가요?', help:'(*전문보육선생님이 상주한다는 가정)', opts:['매우 있음','있음','보통','없음','매우 없음']},
-  {id:'q12', type:'long', title:'12. 어린이 생일파티 서비스에 의견이 있다면 자유롭게 작성해 주세요. (선택 응답)'}
-];
-
-const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const box = document.getElementById('qs');
-Q.forEach(q => {
-  if (q.sec) {
-    box.insertAdjacentHTML('beforeend', `<div class="sec">${esc(q.sec)}</div>` + (q.intro ? `<div class="card intro">${esc(q.intro)}</div>` : ''));
-    return;
-  }
-  let h = `<div class="card" id="c_${q.id}"><p class="q">${esc(q.title)}${q.req ? ' <span class="req">*</span>' : ''}</p>`;
-  if (q.help) h += `<p class="help">${esc(q.help)}</p>`;
-  if (q.type === 'text') h += `<input type="text" name="${q.id}" placeholder="연락처 입력">`;
-  else if (q.type === 'long') h += `<textarea name="${q.id}" placeholder="자유롭게 작성해 주세요"></textarea>`;
-  else {
-    const t = q.type === 'radio' ? 'radio' : 'checkbox';
-    q.opts.forEach(o => { h += `<label class="opt"><input type="${t}" name="${q.id}" value="${esc(o)}">${esc(o)}</label>`; });
-    if (q.other) h += `<label class="opt"><input type="${t}" name="${q.id}" value="__other">기타:<input type="text" class="other" id="${q.id}_other"></label>`;
-  }
-  h += `<div class="err">${q.max ? '1~' + q.max + '개를 선택해 주세요.' : '필수 응답 문항입니다.'}</div></div>`;
-  box.insertAdjacentHTML('beforeend', h);
-  if (q.max) box.querySelectorAll(`input[name="${q.id}"]`).forEach(el => el.addEventListener('change', () => {
-    const on = box.querySelectorAll(`input[name="${q.id}"]:checked`);
-    if (on.length > q.max) { el.checked = false; alert('최대 ' + q.max + '개까지 선택할 수 있어요.'); }
-  }));
-});
-document.querySelectorAll('.other').forEach(t => t.addEventListener('input', () => {
-  const r = t.parentElement.querySelector('input[value="__other"]'); if (t.value) r.checked = true;
-}));
-
-function val(q) {
-  if (q.type === 'text' || q.type === 'long') return document.querySelector(`[name="${q.id}"]`).value.trim();
-  const v = [...document.querySelectorAll(`input[name="${q.id}"]:checked`)].map(e =>
-    e.value === '__other' ? '기타: ' + (document.getElementById(q.id + '_other').value.trim() || '(미입력)') : e.value);
-  return v.join(', ');
-}
-
-document.getElementById('f').addEventListener('submit', async e => {
-  e.preventDefault();
-  let first = null;
-  const data = { submittedAt: new Date().toLocaleString('ko-KR') };
-  Q.filter(q => q.id).forEach(q => {
-    const v = val(q); data[q.id] = v;
-    const bad = !!(q.req && !v);
-    document.getElementById('c_' + q.id).classList.toggle('bad', bad);
-    if (bad && !first) first = document.getElementById('c_' + q.id);
-  });
-  if (first) { first.scrollIntoView({behavior:'smooth', block:'center'}); return; }
-  if (data.q1 && data.agree !== '동의함') { alert('경품 응모를 원하시면 개인정보 수집·이용에 동의해 주세요.'); document.getElementById('c_agree').scrollIntoView({behavior:'smooth', block:'center'}); return; }
-  const sb = document.getElementById('sb'); sb.disabled = true; sb.textContent = '제출 중...';
-  try {
-    await fetch(SCRIPT_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(data) });
-    document.getElementById('f').style.display = 'none';
-    document.getElementById('done').style.display = 'block';
-    window.scrollTo(0, 0);
-  } catch (err) {
-    alert('제출 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요.');
-    sb.disabled = false; sb.textContent = '제출하기';
-  }
-});
-</script>
-</body>
-</html>
+어린이 생일파티 경험 및 신규 서비스 수요 조사
+안녕하세요! 저희는 이마트와 신세계푸드의 자원을 활용한 새로운 서비스 아이디어를 제안하는 프로젝트팀입니다.
+ 부모님들의 실제 생일파티 경험과 의견을 듣고자 합니다. 설문은 약 2분 소요되며, 응답은 아이디어 기획 및 분석 목적으로만 활용됩니다.
+ 본 설문은 이마트·스타필드의 공식 설문이 아니며, 실제 서비스 운영이 확정된 것은 아닙니다.
+A. 기본 정보 및 스타필드 이용 현황
+경품 응모 (선택)
+ 추첨을 통해 5분께 메가커피 기프티콘을 발송드립니다. 기프티콘 발송을 위한 전화번호 또는 메일을 입력해주세요.
+ (ex. 010-0000-0000 / qwer123@naver.com)
+[개인정보 수집·이용 동의]
+수집 항목: 전화번호 또는 이메일
+수집 목적: 경품 발송
+보유 기간: 발송 후 즉시 파기
+동의를 거부할 수 있으며, 거부 시 경품 응모가 제외됩니다.
+동의함 / 동의 안 함
+연령대가 어떻게 되시나요?
+20대
+30대
+40대
+50대 이상
+자녀의 연령은 어떻게 되나요? (복수 선택)
+5세 이하
+6~7세
+8~10세
+11세 이상
+스타필드 마켓(구 이마트)을 방문하거나 이용해보신 경험이 있으신가요?
+주 1회 이상 방문한다
+월 1회 이상 방문한다
+3개월에 1회 이상 방문한다
+방문해본 적 없다
+B. 생일파티 경험 및 불편
+자녀의 친구들을 초대해 생일파티를 진행한 경험이 있으신가요?
+키즈카페 또는 파티룸에서 진행
+집이나 기관에서 진행
+경험 없음
+기타
+향후 1년 이내 자녀의 친구 초대 생일파티를 진행할 생각이 있으신가요?
+있다
+없다
+자녀의 생일파티를 준비할 때 가장 고민되는 부분은 무엇인가요? (최대 2개)
+장소 선정 및 예약
+간식·케이크 준비
+답례품 준비
+파티 진행 및 정리
+비용 부담
+없음
+C. 식품 선택 기준
+아이들의 생일파티 간식과 답례품을 선택할 때 가장 중요하게 생각하는 것은 무엇인가요? (최대 2개)
+원재료·성분 및 알레르기 정보
+위생 및 제조사 신뢰도
+아이들의 입맛과 선호도
+가격
+포장 및 준비의 편리함
+D. 신규 서비스 이용 의향
+[가상 서비스 아이디어 소개]
+ 저희 팀은 대형마트 내 공간과 기존 식품을 활용해 어린이 생일파티를 한 번에 준비할 수 있는 '파티버디(PARTY BUDDY)' 서비스를 제안하고자 합니다.
+ 예상 구성은 다음과 같습니다.
+어린이 8명 기준, 기본 가격 30만 원
+파티룸 2시간 이용
+신세계푸드의 케이크·간식·답례품 제공
+기본 장식·전문보육선생님·사진 촬영 및 정리
+챔피언 2시간 이용권 제공
+ ※ 실제 운영이 확정된 서비스가 아닌, 시장성 검토를 위한 가상의 기획안입니다.
+앞서 소개한 어린이 생일파티 서비스가 이마트 또는 스타필드 내 문화센터에서 30만 원에 제공된다면, 이용할 의향이 있으신가요?
+매우 있다
+어느 정도 있다
+보통이다
+별로 없다
+전혀 없다
+해당 서비스를 이용할 때 가장 우려되는 점은 무엇인가요? (최대 2개)
+가격 부담
+간식·답례품의 품질
+아이들의 재미
+점포 위치·예약의 불편함
+직접 준비하는 것이 더 좋음
+서비스가 필요하지 않음
+기타
+자녀가 생일파티 프로그램에 참여하는 동안 부모님은 마트에서 여유롭게 쇼핑할 수 있다면 이용할 의향이 있으신가요?
+ (*전문보육선생님이 상주한다는 가정)
+매우 있음
+있음
+보통
+없음
+매우 없음
+어린이 생일파티 서비스에 의견이 있다면 자유롭게 작성해 주세요. (선택 응답)
+설문에 참여해 주셔서 감사합니다!
