@@ -1,4 +1,68 @@
-function createSurvey() {
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>파티버디 설문 폼 만들기</title>
+<style>
+:root{--bg:#f6f5f2;--card:#fff;--ink:#1d1d1f;--sub:#6b6b70;--line:#e4e2dc;--accent:#e2231a;--ok:#1f9d55}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif;line-height:1.6}
+.wrap{max-width:860px;margin:0 auto;padding:40px 16px 64px}
+h1{font-size:26px;margin:0 0 6px}
+.lead{color:var(--sub);margin:0 0 28px}
+.step{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-bottom:14px;display:flex;gap:16px}
+.num{flex:0 0 32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center}
+.step h2{font-size:17px;margin:3px 0 6px}
+.step p{margin:0 0 10px;color:var(--sub);font-size:14.5px}
+.btn{display:inline-block;border:0;border-radius:10px;padding:11px 18px;font-size:15px;font-weight:700;cursor:pointer;text-decoration:none;background:var(--ink);color:#fff}
+.btn.red{background:var(--accent)}
+.btn.done{background:var(--ok)}
+ol{margin:0;padding-left:18px;color:var(--sub);font-size:14.5px}
+details{margin-top:18px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px}
+summary{cursor:pointer;font-weight:700}
+pre{white-space:pre-wrap;word-break:break-all;font-size:12.5px;background:#1d1d1f;color:#f2f2f2;border-radius:10px;padding:14px;max-height:420px;overflow:auto;font-family:Consolas,"D2Coding",monospace}
+.note{font-size:13px;color:var(--sub);margin-top:22px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>파티버디 설문 구글폼 만들기</h1>
+  <p class="lead">버튼 두 번 누르고 붙여넣기만 하면 구글폼이 자동으로 만들어져요. (약 1분)</p>
+
+  <div class="step"><div class="num">1</div><div>
+    <h2>코드 복사</h2>
+    <p>폼을 만드는 코드를 클립보드에 복사해요.</p>
+    <button class="btn red" id="copy">코드 복사하기</button>
+  </div></div>
+
+  <div class="step"><div class="num">2</div><div>
+    <h2>Apps Script 열기</h2>
+    <p>구글 계정에 로그인된 상태여야 해요. 새 탭에 빈 스크립트가 열려요.</p>
+    <a class="btn" href="https://script.new" target="_blank" rel="noopener">Apps Script 새로 열기</a>
+  </div></div>
+
+  <div class="step"><div class="num">3</div><div>
+    <h2>붙여넣고 실행</h2>
+    <ol>
+      <li>편집창의 기존 코드를 전부 지우고 <b>Ctrl+V</b>로 붙여넣기</li>
+      <li><b>Ctrl+S</b>로 저장</li>
+      <li>위쪽 함수 선택이 <b>createSurvey</b>인지 확인하고 <b>실행</b></li>
+      <li>권한 검토 → 계정 선택 → 고급 → '(프로젝트)로 이동' → 허용</li>
+    </ol>
+  </div></div>
+
+  <div class="step"><div class="num">4</div><div>
+    <h2>폼 링크 확인</h2>
+    <p>아래 '실행 로그'에 수정용 링크와 응답용 링크가 떠요. 구글 드라이브에도 폼이 생겨요. 맘카페에는 <b>응답용 링크</b>를 올리면 돼요.</p>
+  </div></div>
+
+  <details><summary>코드 직접 보기</summary><pre id="code"></pre></details>
+  <p class="note">※ 실행할 때마다 폼이 새로 하나씩 만들어지니 한 번만 실행하세요.</p>
+</div>
+
+<script>
+const CODE = String.raw`function createSurvey() {
   const form = FormApp.create('어린이 생일파티 경험 및 신규 서비스 수요 조사');
   form.setDescription(
     '안녕하세요! 저희는 이마트와 신세계푸드의 자원을 활용한 새로운 서비스 아이디어를 제안하는 프로젝트팀입니다.\n' +
@@ -110,4 +174,17 @@ function createSurvey() {
 
   Logger.log('수정용 링크: ' + form.getEditUrl());
   Logger.log('응답용 링크: ' + form.getPublishedUrl());
-}
+}`;
+document.getElementById('code').textContent = CODE;
+const btn = document.getElementById('copy');
+btn.addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText(CODE); }
+  catch (e) {
+    const t = document.createElement('textarea'); t.value = CODE; document.body.appendChild(t);
+    t.select(); document.execCommand('copy'); t.remove();
+  }
+  btn.textContent = '복사 완료! 2번으로'; btn.classList.add('done');
+});
+</script>
+</body>
+</html>
